@@ -127,3 +127,5 @@ packages/
 
 # VScode system files
 .vscode/*
+
+key.txt

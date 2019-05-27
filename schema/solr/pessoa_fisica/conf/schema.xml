@@ -7,8 +7,8 @@
         <field name="_root_" type="string" indexed="true" stored="false" docValues="false" multiValued="false"/>	
 
 	<field name="uuid" type="string" indexed="true" stored="true" required="true" multiValued="false" /> 
-	<field name="cpf" type="long" indexed="true" stored="true"/>
-	<field name="rg" type="long" indexed="true" stored="true"/>
+	<field name="cpf" type="string" indexed="true" stored="true"/>
+	<field name="rg" type="string" indexed="true" stored="true"/>
 	<field name="dt_nasc" type="date" indexed="true" stored="true"/>
 	<field name="nome" type="text_ws" indexed="true" stored="true"/>
 	<field name="nome_rg" type="text_ws" indexed="true" stored="true"/>
@@ -78,6 +78,7 @@
     <fieldType name="text_ws" class="solr.TextField" positionIncrementGap="100">
       <analyzer>
         <tokenizer class="solr.WhitespaceTokenizerFactory"/>
+	<filter class="solr.LowerCaseFilterFactory"/>
       </analyzer>
     </fieldType>
 
