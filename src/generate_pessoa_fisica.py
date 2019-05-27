@@ -2,7 +2,7 @@
 from base import spark
 from timer import timer
 
-from pyspark.sql.functions import col, regexp_replace
+from pyspark.sql.functions import col, regexp_replace, when
 from opg_utils import uuidsha
 
 uuidshaudf = spark.udf.register('uuidshaudf', uuidsha)
@@ -51,7 +51,7 @@ A.ano_obito as ano_obito,
 A.ano_ultima_entrega_declaracao as ano_ultima_entrega_declaracao"""
 
 rgcivil_columns = """B.nu_rg as num_rg,
-B.nu_cpf as nu_cpf_rg,
+lpad(B.nu_cpf,11,'0') as nu_cpf_rg,
 UPPER(B.no_cidadao) as nome_rg,
 UPPER(B.no_paicidadao) as nome_pai,
 UPPER(B.no_maecidadao) as nome_mae_rg,
@@ -66,18 +66,18 @@ UPPER(B.uf) as sigla_uf_rg,
 B.cep as num_cep_rg"""
 
 rgcivil_null_list = []
-for x in rgcivil_columns.split(','):
+for x in rgcivil_columns.split('\n'):
     nl = ['NULL']
     nl.extend(x.split(" ")[1:])
     rgcivil_null_list.append(" ".join(nl))
-rgcivil_null_list = ",".join(rgcivil_null_list)
+rgcivil_null_list = "\n".join(rgcivil_null_list)
 
 lc_cpf_null_list = []
-for x in lc_cpf_columns.split(','):
+for x in lc_cpf_columns.split('\n'):
     nl = ['NULL']
     nl.extend(x.split(" ")[1:])
     lc_cpf_null_list.append(" ".join(nl))
-lc_cpf_null_list = ",".join(lc_cpf_null_list)
+lc_cpf_null_list = "\n".join(lc_cpf_null_list)
 
 selected_columns = """
     {},
@@ -122,7 +122,7 @@ with timer():
             SELECT
             {}, 'CPF' as motivo_juncao
             FROM bases.lc_cpf A
-            INNER JOIN detran_max_exp_dt B ON A.num_cpf = B.nu_cpf
+            INNER JOIN detran_max_exp_dt B ON A.num_cpf = lpad(B.nu_cpf, 11, '0')
             UNION ALL
             SELECT
             {}, 'NOME NOME_MAE DT_NASCIMENTO' as motivo_juncao
@@ -193,6 +193,7 @@ with timer():
             FROM tabela
             LEFT JOIN staging.lc_ppe ON lc_ppe.cpf = tabela.num_cpf
         """)
+        tabela.withColumn("nome", when(col("nome") == "", col("nome_rg")).otherwise(col("nome")))
 
 
     print('Persisting Pessoa\'s attributes')
