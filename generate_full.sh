@@ -1,3 +1,4 @@
+export SILENT=1
 ./generate_uuids.sh
 ./generate_pessoa_fisica.sh
 ./generate_opvs.sh
