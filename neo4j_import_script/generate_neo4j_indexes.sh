@@ -27,13 +27,12 @@ while [ ! -z "$(indexes)" ];  do sleep 1; echo .; done
 
 echo "Atualizando relações para 'sensível'"
 docker exec -i  $(docker ps -f 'name=neo4j' -q) cypher-shell -u neo4j -p $NEO4J_PASSWD  << FIM
-MATCH r = (n:Pessoa {sensivel:1})-[*..1]-(n2)
-set n2.sensivel = 1;
+MATCH r = (n:Pessoa {sensivel:'1'})-[*..1]-(n2)
+set n2.sensivel = '1'
 
-
-MATCH  (n:Pessoa {sensivel:1})-[r *..1]-(n2)
+MATCH  (n:Pessoa {sensivel:'1'})-[r *..1]-(n2)
 UNWIND r AS x
-set x.sensivel = true;
+set x.sensivel = '1';
 
 FIM
 

@@ -35,4 +35,4 @@ docker run --name neo4j \
     --env=NEO4J_PASSWD=$NEO4J_PASSWD \
     neo4j:3.5.2 
 
-./generate_neo4j_indexes.sh
+sh generate_neo4j_indexes.sh
