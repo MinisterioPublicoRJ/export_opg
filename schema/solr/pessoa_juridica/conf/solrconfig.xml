@@ -215,7 +215,7 @@
          before flushing.
          If both ramBufferSizeMB and maxBufferedDocs is set, then
          Lucene will flush based on whichever limit is hit first.  -->
-         <ramBufferSizeMB>128</ramBufferSizeMB> 
+         <ramBufferSizeMB>256</ramBufferSizeMB> 
     <!-- <maxBufferedDocs>1000</maxBufferedDocs> -->
 
     <!-- Expert: Merge Policy 
