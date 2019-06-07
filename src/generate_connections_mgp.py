@@ -77,7 +77,9 @@ with timer():
         union(pessoa_fisica_nome_nasc).\
         union(pessoa_fisica_nome_rg_mae).\
         union(pessoa_fisica_nome_rg_mae_rg).\
-        union(pessoa_fisica_nome_rg_nasc)
+        union(pessoa_fisica_nome_rg_nasc).\
+        select(['uuid', 'pesf_pess_dk']).\
+        distinct()
 
     resultado = pessoa_fisica.withColumnRenamed('uuid', 'start_node').\
         join(
