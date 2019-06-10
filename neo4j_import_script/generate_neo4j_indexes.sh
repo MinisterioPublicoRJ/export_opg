@@ -20,6 +20,10 @@ CREATE INDEX ON :Pessoa (sensivel);
 CREATE INDEX ON :Veiculo (sensivel);
 CREATE INDEX ON :Embarcacao (sensivel);
 CREATE INDEX ON :Empresa (sensivel);
+create index on :Personagem(pers_dk);
+create index on :Pessoa(num_cpf)
+create index on :Empresa(num_cnpj)
+
 FIM
 
 echo "Aguardando geração dos índices no NEO4J"
