@@ -1,20 +1,21 @@
 from pyspark.sql.functions import lit
 
-from base import spark
+from base import spark, BASES, DADOSSINAPSE
 from opg_utils import uuidsha
 from timer import timer
+from context import Database
 
 
 uuidshaudf = spark.udf.register('uuidsha', uuidsha)
 
 
 print('Generating watercraft connections')
-with timer():
+with timer(), Database(BASES):
     print('Reading tables')
     with timer():
-        embarcacao = spark.table('bases.lc_embarcacao')
-        pessoa = spark.table('bases.pessoa_fisica')
-        empresa = spark.table('bases.lc_cnpj')
+        embarcacao = spark.table('lc_embarcacao')
+        pessoa = spark.table('pessoa_fisica')
+        empresa = spark.table('lc_cnpj')
 
         # Merge persons with watercrafts
         pessoa_embarcacao = pessoa.filter('num_cpf is not null').\
@@ -33,7 +34,8 @@ with timer():
             withColumn('label', lit('PROPRIETARIO').cast('string')).\
             withColumn('uuid', uuidshaudf())
 
+with timer(), Database(DADOSSINAPSE):
         pessoa_embarcacao.write.mode("overwrite").saveAsTable(
-            "dadossinapse.pessoa_embarcacao_ope")
+            "pessoa_embarcacao_ope")
         empresa_embarcacao.write.mode("overwrite").saveAsTable(
-            "dadossinapse.empresa_embarcacao_ope")
+            "empresa_embarcacao_ope")

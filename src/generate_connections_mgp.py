@@ -1,24 +1,25 @@
-from base import spark
+from base import spark, BASES, DADOSSINAPSE
 from opg_utils import uuidsha
 from timer import timer
 from pyspark.sql.functions import lit, lower
 from pyspark.sql.types import StringType
+from context import Database
 
 uuidshaudf = spark.udf.register('uuidshaudf', uuidsha)
 
-with timer():
-    spark.sql('analyze table bases.orgaos compute statistics')
-    spark.sql('analyze table bases.lc_cnpj compute statistics')
-    spark.sql('analyze table bases.documentos compute statistics')
-    spark.sql('analyze table bases.personagem compute statistics')
-    spark.sql('analyze table bases.pessoa_fisica compute statistics')
+with timer(), Database(BASES):
+    spark.sql('analyze table orgaos compute statistics')
+    spark.sql('analyze table lc_cnpj compute statistics')
+    spark.sql('analyze table documentos compute statistics')
+    spark.sql('analyze table personagem compute statistics')
+    spark.sql('analyze table pessoa_fisica compute statistics')
     spark.sql('analyze table exadata.mcpr_pessoa_fisica compute statistics')
 
-    orgaos = spark.table('bases.orgaos')
-    empresas = spark.table('bases.lc_cnpj')
-    documentos = spark.table('bases.documentos')
-    personagem = spark.table('bases.personagem')
-    det_pessoa_fisica = spark.table('bases.pessoa_fisica')
+    orgaos = spark.table('orgaos')
+    empresas = spark.table('lc_cnpj')
+    documentos = spark.table('documentos')
+    personagem = spark.table('personagem')
+    det_pessoa_fisica = spark.table('pessoa_fisica')
     mgp_pessoa_fisica = spark.table('exadata.mcpr_pessoa_fisica')
 
     pessoa_fisica_cpf = det_pessoa_fisica.join(
@@ -90,8 +91,9 @@ with timer():
         withColumn('label', lit('PERSONAGEM').cast(StringType())).\
         withColumn('uuid', uuidshaudf())
 
+with timer(), Database(DADOSSINAPSE):
     resultado.write.mode("overwrite").saveAsTable(
-        "dadossinapse.pessoa_personagem_ope")
+        "pessoa_personagem_ope")
 
     personagem_documento = personagem.withColumnRenamed('uuid', 'start_node').\
         join(documentos, personagem.pers_docu_dk == documentos.docu_dk).\
@@ -101,7 +103,7 @@ with timer():
         withColumn('uuid', uuidshaudf())
 
     personagem_documento.write.mode("overwrite").saveAsTable(
-        "dadossinapse.personagem_documento_ope")
+        "personagem_documento_ope")
 
     documento_orgao = documentos.withColumnRenamed('uuid', 'start_node').\
         join(
@@ -113,7 +115,7 @@ with timer():
         withColumn('uuid', uuidshaudf())
 
     documento_orgao.write.mode("overwrite").saveAsTable(
-        "dadossinapse.documento_orgao_ope")
+        "documento_orgao_ope")
 
     mprj = empresas.select(['uuid']).\
         withColumnRenamed('uuid', 'end_node').\
@@ -128,4 +130,4 @@ with timer():
         withColumn('uuid', uuidshaudf())
 
     orgao_mprj.write.mode("overwrite").saveAsTable(
-        "dadossinapse.orgao_mprj_ope")
+        "orgao_mprj_ope")

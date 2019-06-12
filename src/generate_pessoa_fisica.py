@@ -1,6 +1,7 @@
 # coding=utf-8
-from base import spark
+from base import spark, BASES
 from timer import timer
+from context import Database
 
 from pyspark.sql.functions import col, regexp_replace, when
 from opg_utils import uuidsha
@@ -85,17 +86,17 @@ selected_columns = """
 """.format(lc_cpf_columns, rgcivil_columns)
 
 print('Generating Pessoa Table')
-with timer():
+with timer(), Database(BASES):
     print('Joining lc_cpf and detran_regcivil')
     with timer():
         max_dt = spark.sql("""
             SELECT nu_rg, MAX(dt_expedicao_carteira) as max_date
-            FROM bases.detran_regcivil
+            FROM detran_regcivil
             GROUP BY nu_rg
         """)
         max_dt.registerTempTable("max_dt")
         detran_max_exp_dt = spark.sql("""
-            SELECT A.* FROM bases.detran_regcivil A
+            SELECT A.* FROM detran_regcivil A
             INNER JOIN max_dt
             ON A.nu_rg = max_dt.nu_rg AND
             (A.dt_expedicao_carteira = max_dt.max_date
@@ -121,12 +122,12 @@ with timer():
         inners = spark.sql("""
             SELECT
             {}, 'CPF' as motivo_juncao
-            FROM bases.lc_cpf A
+            FROM lc_cpf A
             INNER JOIN detran_max_exp_dt B ON A.num_cpf = lpad(B.nu_cpf, 11, '0')
             UNION ALL
             SELECT
             {}, 'NOME NOME_MAE DT_NASCIMENTO' as motivo_juncao
-            FROM bases.lc_cpf A
+            FROM lc_cpf A
             INNER JOIN detran_max_exp_dt B ON
                 A.nome = UPPER(B.no_cidadao) AND
                 A.nome_mae = UPPER(B.no_maecidadao) AND
@@ -138,7 +139,7 @@ with timer():
         tabela = spark.sql("""
             SELECT
             {},{}, NULL as motivo_juncao
-            FROM bases.lc_cpf A
+            FROM lc_cpf A
             WHERE NOT EXISTS
                 (
                     SELECT 1
@@ -195,7 +196,4 @@ with timer():
         """)
         tabela.withColumn("nome", when(col("nome") == "", col("nome_rg")).otherwise(col("nome")))
 
-
-    print('Persisting Pessoa\'s attributes')
-    with timer():
-        tabela.write.mode('overwrite').saveAsTable('bases.pessoa_fisica')
+        tabela.write.mode('overwrite').saveAsTable('pessoa_fisica')

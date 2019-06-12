@@ -1,7 +1,7 @@
 #!/bin/sh
 export PYTHONIOENCODING=utf8
 
-spark2-submit --py-files src/opg_utils.py,src/timer.py \
+spark2-submit --py-files src/opg_utils.py,src/timer.py,src/context.py \
         --num-executors 300 \
         --executor-cores 1 \
         --executor-memory 4g  \
