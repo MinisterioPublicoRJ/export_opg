@@ -1,12 +1,11 @@
 from base import spark, BASES, DADOSSINAPSE
 from opg_utils import uuidsha
-from timer import timer
 from context import Database
 
 spark.udf.register('uuidsha', uuidsha)
 
 print('Generating mother connections')
-with timer(), Database(BASES):
+with Database(BASES):
     spark.sql("""analyze table pessoa_fisica compute statistics""")
     filhotes = spark.sql("""select
         uuid idpessoa,
@@ -15,7 +14,7 @@ with timer(), Database(BASES):
         from pessoa_fisica
         where
         data_nascimento > cast('1800-01-01' as timestamp)
-        and data_nascimento < cast('2019-01-01' as timestamp)
+        and data_nascimento < cast('2020-01-01' as timestamp)
         and nome_mae IS NOT NULL and nome_mae != ''""")
     filhotes.registerTempTable("filhotes")
     mamaes = spark.sql("""select
@@ -27,7 +26,7 @@ with timer(), Database(BASES):
         where
         ind_sexo = 'F'
         and data_nascimento > cast('1800-01-01' as timestamp)
-        and data_nascimento < cast('2019-01-01' as timestamp)
+        and data_nascimento < cast('2020-01-01' as timestamp)
         and nome IS NOT NULL and nome != ''""")
     mamaes.registerTempTable("mamaes")
     tabela = spark.sql("""select idpessoa, idmae
@@ -57,6 +56,6 @@ with timer(), Database(BASES):
         from tabela
         where idpessoa in (select idpessoa from grupo)""")
 
-with timer(), Database(DADOSSINAPSE):
+with Database(DADOSSINAPSE):
     resultado.write.mode("overwrite").saveAsTable(
         "pessoa_mae_ope")

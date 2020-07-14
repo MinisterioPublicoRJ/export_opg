@@ -4,9 +4,14 @@ import os
 import random
 
 
-def update_uuid(table, spark, destination, uuidfunc, partcount=300):
+def update_uuid(table, spark, destination, uuidfunc, coalesce, partcount=300):
     "Generates UUID and copy table to destination database"
-    spark_table = spark.table(table).repartition(partcount)
+    
+    if coalesce:
+        spark_table = spark.table(table).coalesce(partcount)
+    else:
+        spark_table = spark.table(table).repartition(partcount)
+    #spark_table = spark.table(table).coalesce(partcount)
     spark_table = spark_table.withColumn(
         'uuid',
         uuidfunc
@@ -17,7 +22,7 @@ def update_uuid(table, spark, destination, uuidfunc, partcount=300):
         .saveAsTable(destination)
 
     # teste de economia de memoria
-    spark_table.unpersist()
+    #spark_table.unpersist()
 
 
 def cuuid():
@@ -31,7 +36,7 @@ def limpa(entrada):
         return entrada.decode(
             'ascii', errors='ignore').encode('ascii') if entrada else ""
     else:
-        return ""
+        return ''
 
 
 random.seed(os.getpid())

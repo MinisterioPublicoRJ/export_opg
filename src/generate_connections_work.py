@@ -1,11 +1,10 @@
 from base import spark, BASES, DADOSSINAPSE
-from timer import timer
 from context import Database
 
 
 print('Generating People/Company\'s connections: Work')
 print('Building connections and UUID')
-with timer(), Database(BASES):
+with Database(BASES):
     tabela = spark.sql("""select
             vinculo.uuid,
             'TRABALHA' label,
@@ -21,6 +20,6 @@ with timer(), Database(BASES):
             empresa.num_cnpj = vinculo.cnpj""")
 
 print('Persisting Work OPE')
-with timer(), Database(DADOSSINAPSE):
+with Database(DADOSSINAPSE):
     tabela.write.mode('overwrite').saveAsTable(
         'vinculo_trabalhista_ope')

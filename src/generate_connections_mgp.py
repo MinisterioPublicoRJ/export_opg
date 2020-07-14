@@ -7,7 +7,7 @@ from context import Database
 
 uuidshaudf = spark.udf.register('uuidshaudf', uuidsha)
 
-with timer(), Database(BASES):
+with Database(BASES):
     spark.sql('analyze table orgaos compute statistics')
     spark.sql('analyze table lc_cnpj compute statistics')
     spark.sql('analyze table documentos compute statistics')
@@ -24,51 +24,51 @@ with timer(), Database(BASES):
 
     pessoa_fisica_cpf = det_pessoa_fisica.join(
         mgp_pessoa_fisica,
-        det_pessoa_fisica.num_cpf == mgp_pessoa_fisica.pesf_cpf
+        det_pessoa_fisica.num_cpf == mgp_pessoa_fisica.PESF_CPF
     )
 
     pessoa_fisica_rg = det_pessoa_fisica.join(
         mgp_pessoa_fisica,
-        det_pessoa_fisica.num_rg == mgp_pessoa_fisica.pesf_nr_rg
+        det_pessoa_fisica.num_rg == mgp_pessoa_fisica.PESF_NR_RG
     )
-
+    
     pessoa_fisica_nome_mae = det_pessoa_fisica.join(
         mgp_pessoa_fisica,
-        (det_pessoa_fisica.nome == mgp_pessoa_fisica.pesf_nm_pessoa_fisica)
-        & (det_pessoa_fisica.nome_mae == mgp_pessoa_fisica.pesf_nm_mae)
+        (det_pessoa_fisica.nome == mgp_pessoa_fisica.PESF_NM_PESSOA_FISICA)
+        & (det_pessoa_fisica.nome_mae == mgp_pessoa_fisica.PESF_NM_MAE)
     )
 
     pessoa_fisica_nome_mae_rg = det_pessoa_fisica.join(
         mgp_pessoa_fisica,
-        (det_pessoa_fisica.nome == mgp_pessoa_fisica.pesf_nm_pessoa_fisica)
-        & (det_pessoa_fisica.nome_mae_rg == mgp_pessoa_fisica.pesf_nm_mae)
+        (det_pessoa_fisica.nome == mgp_pessoa_fisica.PESF_NM_PESSOA_FISICA)
+        & (det_pessoa_fisica.nome_mae_rg == mgp_pessoa_fisica.PESF_NM_MAE)
     )
 
     pessoa_fisica_nome_nasc = det_pessoa_fisica.join(
         mgp_pessoa_fisica,
-        (det_pessoa_fisica.nome == mgp_pessoa_fisica.pesf_nm_pessoa_fisica)
-        & (det_pessoa_fisica.data_nascimento == mgp_pessoa_fisica.pesf_dt_nasc)
+        (det_pessoa_fisica.nome == mgp_pessoa_fisica.PESF_NM_PESSOA_FISICA)
+        & (det_pessoa_fisica.data_nascimento == mgp_pessoa_fisica.PESF_DT_NASC)
     )
 
     pessoa_fisica_nome_rg_mae = det_pessoa_fisica.join(
         mgp_pessoa_fisica,
-        (det_pessoa_fisica.nome_rg == mgp_pessoa_fisica.pesf_nm_pessoa_fisica)
-        & (det_pessoa_fisica.nome_mae == mgp_pessoa_fisica.pesf_nm_mae)
+        (det_pessoa_fisica.nome_rg == mgp_pessoa_fisica.PESF_NM_PESSOA_FISICA)
+        & (det_pessoa_fisica.nome_mae == mgp_pessoa_fisica.PESF_NM_MAE)
     )
 
     pessoa_fisica_nome_rg_mae_rg = det_pessoa_fisica.join(
         mgp_pessoa_fisica,
         (lower(det_pessoa_fisica.nome_rg) == lower(
-            mgp_pessoa_fisica.pesf_nm_pessoa_fisica))
+            mgp_pessoa_fisica.PESF_NM_PESSOA_FISICA))
         & (lower(
             det_pessoa_fisica.nome_mae_rg) == lower(
-                mgp_pessoa_fisica.pesf_nm_mae))
+                mgp_pessoa_fisica.PESF_NM_MAE))
     )
 
     pessoa_fisica_nome_rg_nasc = det_pessoa_fisica.join(
         mgp_pessoa_fisica,
-        (det_pessoa_fisica.nome_rg == mgp_pessoa_fisica.pesf_nm_pessoa_fisica)
-        & (det_pessoa_fisica.data_nascimento == mgp_pessoa_fisica.pesf_dt_nasc)
+        (det_pessoa_fisica.nome_rg == mgp_pessoa_fisica.PESF_NM_PESSOA_FISICA)
+        & (det_pessoa_fisica.data_nascimento == mgp_pessoa_fisica.PESF_DT_NASC)
     )
 
     pessoa_fisica = pessoa_fisica_cpf.\
@@ -85,18 +85,18 @@ with timer(), Database(BASES):
     resultado = pessoa_fisica.withColumnRenamed('uuid', 'start_node').\
         join(
             personagem,
-            pessoa_fisica.pesf_pess_dk == personagem.pers_pess_dk
+            pessoa_fisica.pesf_pess_dk == personagem.PERS_PESS_DK
         ).withColumnRenamed('uuid', 'end_node').\
         select(['start_node', 'end_node']).\
         withColumn('label', lit('PERSONAGEM').cast(StringType())).\
         withColumn('uuid', uuidshaudf())
 
-with timer(), Database(DADOSSINAPSE):
+with Database(DADOSSINAPSE):
     resultado.write.mode("overwrite").saveAsTable(
         "pessoa_personagem_ope")
 
     personagem_documento = personagem.withColumnRenamed('uuid', 'start_node').\
-        join(documentos, personagem.pers_docu_dk == documentos.docu_dk).\
+        join(documentos, personagem.PERS_DOCU_DK == documentos.docu_dk).\
         select(['start_node', 'uuid']).\
         withColumnRenamed('uuid', 'end_node').\
         withColumn('label', lit('PERSONAGEM').cast(StringType())).\

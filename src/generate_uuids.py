@@ -22,18 +22,14 @@ with Database(BASES):
                 col('data_nascimento').cast('string'),
                 col('ind_sexo'),
                 col('nome_mae')
-            )
+            ),
+            True
         )
 
     print('Generating Detran Registro Civil UUID')
     with timer():
-        regcivil_no_header = spark.sql("""
-        SELECT * FROM staging.detran_regcivil
-        WHERE base = 'DETRAN'
-    """)
-        regcivil_no_header.registerTempTable('regcivil_no_header')
         update_uuid(
-            'regcivil_no_header',
+            'detran.vw_regcivil',
             spark,
             'detran_regcivil',
             uuidshaudf(
@@ -52,7 +48,8 @@ with Database(BASES):
                 col('municipio'),
                 col('uf'),
                 col('cep')
-            )
+            ),
+            False
         )
 
     print('Generating Companys UUID')
@@ -81,7 +78,8 @@ with Database(BASES):
                 col('num_cnpj'),
                 col('ind_matriz_filial').cast('string'),
                 col('nome'),
-            )
+            ),
+            True
         )
 
     print('Generating Partnership UUID')
@@ -95,7 +93,8 @@ with Database(BASES):
                 col('cpf_socio'),
                 col('dt_inicio').cast('string'),
                 col('dt_fim').cast('string'),
-            )
+            ),
+            True
         )
 
     print('Generating Work UUID')
@@ -109,7 +108,8 @@ with Database(BASES):
                 col('cpf'),
                 col('dt_inicio').cast('string'),
                 col('dt_fim').cast('string'),
-            )
+            ),
+            True
         )
 
     print('Generating Ship UUID')
@@ -127,7 +127,8 @@ with Database(BASES):
                 col('ult_obs_imp_doc_emb_gr_porte'),
                 col('propr_armador_afret_atual'),
                 col('construtor_casco'),
-            )
+            ),
+            True
         )
 
     print('Generating Detran Multa UUID')
@@ -165,7 +166,8 @@ with Database(BASES):
                 col('descricao_tipo'),
                 col('descricao_cor'),
                 col('dt_status_aut_sm').cast('string')
-            )
+            ),
+            True
         )
 
     print('Generating Detran Veiculo UUID')
@@ -183,7 +185,8 @@ with Database(BASES):
                 col('placa'),
                 col('renavam'),
                 col('chassi')
-            )
+            ),
+            True
         )
 
     print('Generating Personagem UUID')
@@ -210,7 +213,7 @@ with Database(BASES):
                 col('pers_pess_dk').cast('string'),
                 col('pers_tppe_dk').cast('string')
             ),
-            800
+            False
         )
 
     print('Generating Orgao UUID')
@@ -234,8 +237,8 @@ with Database(BASES):
                 col('cd_orgao').cast('string'),
                 col('nm_orgao'),
             ),
+            False
         )
-        orgaos.unpersist()
 
     print('Generating Document UUID')
     with timer():
@@ -262,5 +265,6 @@ with Database(BASES):
                 col('docu_nr_externo').cast('string'),
                 col('docu_orgi_orga_dk_responsavel').cast('string')
             ),
+            False
         )
-        documentos.unpersist()
+        #documentos.unpersist()
