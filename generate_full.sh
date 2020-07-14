@@ -1,4 +1,4 @@
-export SILENT=1
+export SILENT=0
 ./generate_uuids.sh
 ./generate_pessoa_fisica.sh
 ./generate_opvs.sh
@@ -15,4 +15,6 @@ echo "Copying from HDFS to Neo4J datastore"
 ./copy_csv_destination.sh
 
 echo "Sending Neo4J import command"
+cp -rf neo4j_import_script/ /mnt/CADG/export_opg/
+chmod a+rwx /mnt/CADG/export_opg/neo4j_import_script/*.sh
 ssh neo4j@neo4j.pgj.rj.gov.br 'bash -x /neo4j/import/export_opg/neo4j_import_script/coordinator_neo4j.sh > import.log 2> import_error.log &'

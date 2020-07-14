@@ -1,20 +1,21 @@
 from pyspark.sql.functions import expr, lit
 from pyspark.sql.types import StringType
 
-from base import spark
+from base import spark, BASES, DADOSSINAPSE
 from opg_utils import uuidsha
 from timer import timer
+from context import Database
 
 uuidshaudf = spark.udf.register('uuidsha', uuidsha)
 
 print('Generating ticket connections')
 with timer():
     print('Reading tables')
-    with timer():
-        pessoa = spark.table('bases.pessoa_fisica')
-        multa = spark.table('bases.detran_multa')
-        veiculo = spark.table('bases.detran_veiculo')
-        empresa = spark.table('bases.lc_cnpj')
+    with timer(), Database(BASES):
+        pessoa = spark.table('pessoa_fisica')
+        multa = spark.table('detran_multa')
+        veiculo = spark.table('detran_veiculo')
+        empresa = spark.table('lc_cnpj')
 
         # Removing left padding zeros
         multa = multa.withColumn("cpf", expr(
@@ -26,7 +27,7 @@ with timer():
 
         pessoas_com_carro = spark.sql(
             """select *
-            from bases.pessoa_fisica
+            from pessoa_fisica
             where num_cpf in (select cpf from veiculo_cpf)"""
         )
 
@@ -71,14 +72,15 @@ with timer():
             withColumn('label', lit('AUTUADO').cast(StringType())).\
             withColumn('uuid', uuidshaudf())
 
+    with timer(), Database(DADOSSINAPSE):
         # Persist tables
         pessoa_multa.write.mode("overwrite").saveAsTable(
-            "dadossinapse.pessoa_multa_ope")
+            "pessoa_multa_ope")
         veiculo_multa.write.mode("overwrite").saveAsTable(
-            "dadossinapse.veiculo_multa_ope")
+            "veiculo_multa_ope")
         pessoa_veiculo.write.mode("overwrite").saveAsTable(
-            "dadossinapse.pessoa_veiculo_ope")
+            "pessoa_veiculo_ope")
         empresa_veiculo.write.mode("overwrite").saveAsTable(
-            "dadossinapse.empresa_veiculo_ope")
+            "empresa_veiculo_ope")
         empresa_multa.write.mode("overwrite").saveAsTable(
-            "dadossinapse.empresa_multa_ope")
+            "empresa_multa_ope")

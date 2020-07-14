@@ -1,13 +1,14 @@
-from base import spark, sc
-from opg_utils import uuidsha
-from timer import timer
 import time
 import requests
 import json
-from pyspark.sql.functions import lit
 import pysolr
 import csv
 import StringIO
+from base import spark, sc, BASES
+from opg_utils import uuidsha
+from timer import timer
+from context import Database
+from pyspark.sql.functions import lit
 
 
 def chunkeia(generator, n):                                                                                   
@@ -113,7 +114,7 @@ colecoes = [
                     ' ',
                     placa
                 ) descricao
-            from bases.detran_veiculo
+            from detran_veiculo
         """
     },
     {
@@ -128,10 +129,10 @@ colecoes = [
                 d.nr_mp, 
                 collect_set(p.tp_descricao) as ds_info_personagem,
                 'Documento' as label
-            FROM dadossinapse.documento_opv d
+            FROM documentos d
             join (
                 select p.pers_docu_dk,  concat(p.tppe_descricao, ' - ', p.cpfcnpj, ' - ', p.pess_nm_pessoa) as tp_descricao
-                from dadossinapse.personagem_opv p
+                from personagem p
             ) p
                 on p.pers_docu_dk = d.docu_dk
             GROUP BY d.uuid,
@@ -153,7 +154,7 @@ colecoes = [
                 ano_construcao,
                 cpf_cnpj,
                 'Embarcacao' label
-            from bases.lc_embarcacao
+            from lc_embarcacao
         """
     },
     {
@@ -169,8 +170,8 @@ colecoes = [
                 lc_cnpj.nome_municipio municipio,
                 lc_cnpj.sigla_uf uf,
                 'Empresa' label
-            from bases.lc_cnpj
-            inner join bases.lc_cpf on
+            from lc_cnpj
+            inner join lc_cpf on
                 lc_cnpj.num_cpf_responsavel = lc_cpf.num_cpf
         """
     },
@@ -191,21 +192,16 @@ colecoes = [
                 when 'F' then 'Feminino'
                 else 'Indisponivel' end as sexo,
                 pessoa_fisica_opv.sigla_uf uf,
-                case 
-                when lc_ppe.cpf is not null then true
-                else false
-                end as sensivel,
+                sensivel,
                 'Pessoa' as label
-            FROM dadossinapse.pessoa_fisica_opv 
-            left join staging.lc_ppe on
-                lc_ppe.cpf = pessoa_fisica_opv.num_cpf
+            FROM pessoa_fisica
         """
     }
 ]
 
 for colecao in colecoes:
     print('Sending %s' % colecao['colecao'])
-    with timer():
+    with timer(), Database(BASES):
         tabela = spark.sql(colecao['query'])
         tabela = tabela.repartition(40)
         tabela.rdd.mapPartitions(processaparticao(colecao['colecao'])).count()

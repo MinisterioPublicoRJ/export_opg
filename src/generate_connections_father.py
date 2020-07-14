@@ -1,20 +1,20 @@
-from base import spark
+from base import spark, BASES, DADOSSINAPSE
 from opg_utils import uuidsha
-from timer import timer
+from context import Database
 
 spark.udf.register('uuidsha', uuidsha)
 
 print('Generating father connections')
-with timer():
-    spark.sql("""analyze table bases.pessoa_fisica compute statistics""")
+with Database(BASES):
+    spark.sql("""analyze table pessoa_fisica compute statistics""")
     filhotes = spark.sql("""select
         uuid idpessoa,
         nome_pai,
         data_nascimento
-        from bases.pessoa_fisica
+        from pessoa_fisica
         where
         data_nascimento > cast('1800-01-01' as timestamp)
-        and data_nascimento < cast('2019-01-01' as timestamp)
+        and data_nascimento < cast('2020-01-01' as timestamp)
         and nome_pai IS NOT NULL and nome_pai != ''""")
     filhotes.registerTempTable("filhotes")
     papais = spark.sql("""select
@@ -22,11 +22,11 @@ with timer():
         nome,
         data_nascimento + interval 13 years reprodutivo_de,
         data_nascimento + interval 50 years reprodutivo_ate
-        from bases.pessoa_fisica
+        from pessoa_fisica
         where
         ind_sexo = 'M'
         and data_nascimento > cast('1800-01-01' as timestamp)
-        and data_nascimento < cast('2019-01-01' as timestamp)
+        and data_nascimento < cast('2020-01-01' as timestamp)
         and nome IS NOT NULL and nome != ''""")
     papais.registerTempTable("papais")
     tabela = spark.sql("""select idpessoa, idpai
@@ -56,5 +56,6 @@ with timer():
             from tabela
             where idpessoa in (select idpessoa from grupo)
         """)
+with Database(DADOSSINAPSE):
     resultado.write.mode("overwrite").saveAsTable(
-        "dadossinapse.pessoa_pai_ope")
+        "pessoa_pai_ope")

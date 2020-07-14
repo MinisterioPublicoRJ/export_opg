@@ -13,12 +13,12 @@ def save_header(header, dest_folder):
         overwrite=True)
 
 
-def generate_node_csv_for_neo4j(destination, table_name, n_partitions=100):
+def generate_node_csv_for_neo4j(destination, table_name, n_partitions=1):
     dest_folder = '{}/nodes/{}'.format(destination, table_name)
 
     data = spark.sql("""
         SELECT * FROM {}
-    """.format(table_name)).repartition(n_partitions)
+    """.format(table_name)).coalesce(n_partitions)
 
     data.write\
         .mode('overwrite')\
@@ -43,12 +43,12 @@ def generate_node_csv_for_neo4j(destination, table_name, n_partitions=100):
 def generate_relationship_csv_for_neo4j(
         destination,
         table_name,
-        n_partitions=100):
+        n_partitions=1):
     dest_folder = '{}/relationships/{}'.format(destination, table_name)
 
     data = spark.sql("""
         SELECT * FROM {}
-    """.format(table_name)).repartition(n_partitions)
+    """.format(table_name)).coalesce(n_partitions)
 
     data.write\
         .mode('overwrite')\
